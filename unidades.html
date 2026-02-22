@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Buscar Unidade Prisional</title>
+  <style>
+    :root{
+      --bg:#083e53;
+      --accent:#0bb6d4;
+      --text:#e9fbff;
+      --input:#ffffff;
+      --shadow: 0 18px 40px rgba(0,0,0,.25);
+      --radius: 999px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    body{
+      margin:0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
+    }
+    .wrap{
+      width:min(920px, 100%);
+      text-align:center;
+    }
+    h1{
+      margin: 0 0 22px;
+      font-size: clamp(24px, 3.2vw, 44px);
+      line-height:1.15;
+      font-weight:800;
+      color: var(--accent);
+      letter-spacing: .2px;
+    }
+    .searchbar{
+      display:flex;
+      align-items:stretch;
+      width:min(760px, 100%);
+      margin: 0 auto;
+      background: var(--input);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .searchbar input{
+      flex:1;
+      border:0;
+      outline:none;
+      padding: 18px 18px 18px 26px;
+      font-size: 20px;
+      color:#0b2b38;
+    }
+    .searchbar button{
+      width:78px;
+      border:0;
+      outline:none;
+      background: var(--accent);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .searchbar button:active{ transform: translateY(1px); }
+    .hint{
+      margin-top:14px;
+      opacity:.9;
+      font-size:14px;
+    }
+    .error{
+      margin-top:12px;
+      color:#ffd1d1;
+      font-size:14px;
+      display:none;
+    }
+    .footer{
+      margin-top:26px;
+      opacity:.85;
+      font-size:13px;
+    }
+    svg{ width:26px; height:26px; fill:#003142; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Enviar produtos do jumbo direto para um familiar preso é muito fácil!</h1>
+
+    <div class="searchbar" role="search">
+      <input
+        id="unitInput"
+        type="search"
+        list="unitsList"
+        placeholder="Buscar Unidade Prisional"
+        autocomplete="off"
+        aria-label="Buscar Unidade Prisional"
+      />
+      <button id="goBtn" aria-label="Ir para unidade">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 18a8 8 0 1 1 5.293-14.293A8 8 0 0 1 10 18Zm0-14a6 6 0 1 0 3.9 10.6A6 6 0 0 0 10 4Zm10.707 17.293-4.2-4.2 1.414-1.414 4.2 4.2-1.414 1.414Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <datalist id="unitsList"></datalist>
+
+    <div class="hint">Dica: digite “Florianópolis”, “Joinville”, “Itajaí”...</div>
+    <div class="error" id="err">Selecione uma unidade válida na lista.</div>
+
+    <div class="footer">Ao selecionar, você será levado(a) direto para a página da unidade com os produtos autorizados.</div>
+  </div>
+
+  <script>
+    const UNITS = [
+      { name: "Colônia Agroindustrial de Palhoça", url: "/colonia-agroindustrial-de-palhoca" },
+      { name: "Complexo Penitenciário do Estado - COPE", url: "/complexo-penitenciario-do-estado" },
+      { name: "Hospital de Custódia e Tratamento Psiquiátrico – HCTP", url: "/hospital-de-custodia-e-tratamento-psiquiatrico-hctp" },
+      { name: "Penitenciária de Florianópolis", url: "/penitenciaria-de-florianopolis" },
+      { name: "Presídio Masculino Regional de Florianópolis", url: "/presidio-masculino-regional-de-florianopolis" },
+      { name: "Presídio Regional de Biguaçu", url: "/presidio-regional-de-biguacu" },
+      { name: "Presídio Regional de Tijucas", url: "/presidio-regional-de-tijucas" },
+      { name: "Penitenciária Industrial de Joinville", url: "/penitenciaria-industrial-de-joinville" },
+      { name: "Presídio Regional de Barra Velha", url: "/presidio-regional-de-barra-velha" },
+      { name: "Presídio Regional de Joinville", url: "/presidio-regional-de-joinville" },
+      { name: "Penitenciária Masculina do Vale do Itajaí", url: "/penitenciaria-masculina-do-vale-do-itajai" },
+      { name: "Presídio Regional de Brusque", url: "/presidio-regional-de-brusque" },
+      { name: "Presídio Regional de Itajaí", url: "/presidio-regional-de-itajai" },
+      { name: "Presídio Regional de Itapema", url: "/presidio-regional-de-itapema" },
+    ];
+
+    const input = document.getElementById("unitInput");
+    const list = document.getElementById("unitsList");
+    const btn = document.getElementById("goBtn");
+    const err = document.getElementById("err");
+
+    // Ajuste aqui se você quiser forçar domínio absoluto:
+    // const BASE = "https://www.ojumbo.com.br";
+    const BASE = "";
+
+    // preenche as sugestões
+    UNITS.forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = u.name;
+      list.appendChild(opt);
+    });
+
+    function go(){
+      const val = (input.value || "").trim();
+      const match = UNITS.find(u => u.name.toLowerCase() === val.toLowerCase());
+      if(!match){
+        err.style.display = "block";
+        return;
+      }
+      err.style.display = "none";
+      window.location.href = BASE + match.url;
+    }
+
+    btn.addEventListener("click", go);
+    input.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        go();
+      }
+    });
+
+    input.addEventListener("input", () => {
+      err.style.display = "none";
+    });
+  </script>
+</body>
+</html>
